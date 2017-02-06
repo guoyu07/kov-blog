@@ -1,11 +1,12 @@
 <template>
   <div id="app">
     <header-nav></header-nav>
-    <main class="content blog">
+    <main class="content">
       <router-view
-        keep-alive
         transition="fade"
-        transition-mode="out-in">
+        transition-mode="out-in"
+        keep-alive
+        >
       </router-view>
     </main>
     <footer class="copyright">
@@ -20,18 +21,22 @@
     components:{
       HeaderNav
     },
-    ready(){
+    ready( ){
       //请修改config文件中的duoshuoShortName为你自己的多说二级域名
       //http://dev.duoshuo.com/docs/50b344447f32d30066000147
       window.duoshuoQuery = {short_name:process.env.duoshuoShortName};
-      (function() {
-        var ds = document.createElement('script');
-        ds.type = 'text/javascript';ds.async = true;
-        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-        ds.charset = 'UTF-8';
-        (document.getElementsByTagName('head')[0]
-        || document.getElementsByTagName('body')[0]).appendChild(ds);
-      })();
+      let ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+    },
+    transitions: {
+      fade: {
+        enter () {
+          this.$broadcast('enter')
+        }
+      }
     }
   }
 </script>
@@ -45,8 +50,11 @@
 .content
   max-width  850px
   box-sizing border-box
-  margin 0 auto
-  padding: 0.2em 1.4em 0;
+  margin ($header-height + $header-padding-vertical * 2)  auto 0
+  padding: 0 1.4em;
+  @media screen and (max-width: 480px)
+    &
+      margin ($header-height + $header-padding-vertical-small * 2)  auto 0
   img
     max-width 100%
   span.light
@@ -58,11 +66,16 @@
     width 280px
     margin-left 20px
   h1
-    margin 0 0 1em
+    margin .8em 0
+    font-size 2em
   h2
-    margin 2em 0 .8em
-    padding-bottom .7em
-    border-bottom 1px solid $border
+    margin .8em 0
+    padding-bottom 0
+    border-bottom none
+    a
+      color $dark
+      &:hover
+        border-bottom 2px solid $green
   h3
     margin 3em 0 1.2em
     position relative
@@ -74,6 +87,17 @@
       top -2px
       font-size 1.2em
       font-weight bold
+  h4
+    color $light
+    margin 1.2em 0
+  .post-list, .post
+    padding 1em 0 2em
+    border-bottom 1px solid $border
+  .post
+    h2
+      margin 2em 0 0.8em;
+      padding-bottom 0.7em
+      border-bottom 1px solid #ddd
   figure, p, ul, ol
     margin 1.2em 0
   p
@@ -132,7 +156,7 @@
       color #525252
       border-radius 0
       white-space pre
-      &.lang-html, &.lang-js, &.lang-bash, &.lang-css
+      &.lang-html, &.lang-js, &.lang-bash, &.lang-css, &.lang-java
         &:after
           position absolute
           top 0
@@ -152,33 +176,8 @@
         content 'Shell'
       &.lang-css:after
         content 'CSS'
-.content.blog
-  h1
-    margin .8em 0
-    font-size 2em
-  h2
-    margin .8em 0
-    padding-bottom 0
-    border-bottom none
-    a
-      color $dark
-      &:hover
-        border-bottom 2px solid $green
-  h4
-    color $light
-    margin 1.2em 0
-  figure, p
-    margin-left 0
-  .post-list
-    padding 1em 0 2em
-    border-bottom 1px solid $border
-  .post
-    padding 1em 0 2em
-    border-bottom 1px solid $border
-    h2
-      margin 2em 0 0.8em;
-      padding-bottom 0.7em
-      border-bottom 1px solid #ddd
+      &.lang-java:after
+       content 'Java'
 
 .copyright
   color $light

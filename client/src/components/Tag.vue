@@ -37,7 +37,7 @@
       data(){
         this.tags = [];
         this.tagAndItsArticles = [];
-        service.getAllTags().then(res => {
+        return service.getAllTags().then(res => {
           if(res.success){
             res.data.map(tag => {
               service.getPostListWithTag(tag.id).then(resp=>{
@@ -57,7 +57,11 @@
     methods:{
       focus(id){
         let dom = document.getElementById(id);
-        window.scrollTo(0,dom.offsetTop);
+        if (document.documentElement.clientWidth > 480) {
+          window.scrollTo(0,dom.offsetTop);
+        } else {
+          window.scrollTo(0, dom.offsetTop - 60);
+        }
       }
     }
   }

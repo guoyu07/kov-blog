@@ -1,6 +1,7 @@
 <template>
   <div>
     <!--这个div用来避免这个组件成为片段实例-->
+    <catalog dom-id="markdown-content" v-if="contentLoaded && domExist"></catalog>
     <article class="post">
       <header id="header">
         <h1>{{title}}</h1>
@@ -8,13 +9,13 @@
           {{createTime}}
         </h4>
       </header>
-      <p v-html="content | markdown">
+      <p v-html="content | markdown" id="markdown-content">
       </p>
       <div class="fix tag-list" style="margin: 20px 0;">
         <span class="tag" v-for="tag in tags"><a v-link="'/tags'" class="tag-link active">{{tag.name}}</a></span>
       </div>
       <!-- 多说评论框 start -->
-      <article id="duoshuo-comment" v-duoshuo="duoshuoOption">
+      <article id="duoshuo-comment" v-duoshuo="duoshuoOption" v-if="domExist && contentLoaded">
       </article>
       <!-- 多说评论框 end -->
     </article>
@@ -30,10 +31,7 @@
       a.tag-link
         color $light
         border-bottom 2px solid $light
-        &:hover
-          color $green
-          border-bottom 2px solid $green
-        &.active
+        &:hover,&.active
           color $green
           border-bottom 2px solid $green
       &+.tag
@@ -47,43 +45,69 @@
 </style>
 <script>
   import Pagination from './common/Pagination.vue'
+  import Catalog from './common/Catalog.vue'
   import service from '../services/post/index'
   import cursor from '../directives/vue-duoshuo'
+  // import {markdown} from '../filters/index.js'
   export default {
     components:{
-      Pagination
+      Pagination,
+      Catalog
     },
     data () {
       return {
         'id':'',
         'title': '',
         'createTime': '',
-        'excerpt': '',
         'content': '',
         'lastEditTime': null,
         'tags': [],
-        'visits': 0,
         'nextArticle':null,
         'prevArticle':null,
-        'duoshuoOption':{}
+        'duoshuoOption':{},
+        'domExist': false,
+        'contentLoaded': false
       }
     },
     route:{
-      data({to}){
+      data({to,from}){
+        this.contentLoaded = false
+        if(from.path === undefined) {
+          // 如果是打开浏览器直接进入的这个路由
+          this.domExist = true;
+        } else {
+          // 如果不是直接进入的
+          // 需要判断一下是否是从/path/:id进入的,因为可能只是路由的id变化了而已
+          // 并没有经历组件的切换过程, 并不需要等待transition的结束,直接就可以赋值domExist为true
+          if( (/^\/posts\//).test(from.path) && (from.params.postId != undefined)) {
+            this.domExist = true;
+          } else {
+            this.domExist = false;
+          }
+        }
+        this.domExist = from.path === undefined || ((/^\/posts\//).test(from.path) && (to.params.postId));
+        this.duoshuoOption = {}
         return service.getPost(to.params.postId).then(res=>{
           if(res.success === true ){
             if(null !== res.data){
-              delete res.data._id;
+              this.id = res.data._id
+              this.title = res.data.title
+              this.createTime = res.data.createTime
+              this.content = res.data.content
+              this.nextArticle = res.data.nextArticle
+              this.prevArticle = res.data.prevArticle
+              this.lastEditTime = res.data.lastEditTime
+              this.tags = res.data.tags
               let duoshuoOption = {
                 id:res.data.id,
                 title:res.data.title
               }
               this.duoshuoOption = duoshuoOption
-              return res.data
+              this.contentLoaded = true
+              return
             }else{
               this.title = '404 not found';
               this.createTime = '';
-              this.excerpt = '';
               this.content = '';
               this.lastEditTime = null;
               this.tags = [];
@@ -96,6 +120,11 @@
           alert('网络错误,请刷新重试');
         })
       },
+    },
+    events: {
+      'enter': function() {
+        this.domExist = true
+      }
     }
   }
 </script>
